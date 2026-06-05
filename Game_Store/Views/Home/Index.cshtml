@@ -1,0 +1,613 @@
+﻿@{
+    ViewData["Title"] = "Oyun Mağazası";
+}
+
+<div id="authEkrani">
+    <div id="loginFormKutusu" class="card p-4 shadow" style="width: 400px; margin: 0 auto;">
+        <h3 class="text-center text-info mb-4">Sistem Giriş Paneli</h3>
+        <div class="mb-3">
+            <label class="form-label">Kullanıcı Adı</label>
+            <input type="text" id="girisKullaniciAdi" class="form-control" placeholder="Kullanıcı adınız...">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Şifre</label>
+            <input type="password" id="girisSifre" class="form-control" placeholder="Şifreniz...">
+        </div>
+        <button class="btn btn-primary w-100 mb-3" style="background-color: #66c0f4; border: none; color: #171a21;" onclick="sistemeGirisYap()">
+            Giriş Yap
+        </button>
+        <div id="girisHataMesaji" class="text-danger mb-2 text-center small" style="display: none;">Kullanıcı adı veya şifre hatalı!</div>
+        <div class="text-center">
+            <a href="#" class="text-secondary small" onclick="formDegistir('kayit')">Henüz hesabın yok mu? Kayıt Ol</a>
+        </div>
+    </div>
+
+    <div id="kayitFormKutusu" class="card p-4 shadow" style="width: 400px; display: none; margin: 0 auto;">
+        <h3 class="text-center text-success mb-4">Yeni Hesap Oluştur</h3>
+        <div class="mb-3">
+            <label class="form-label">Kullanıcı Adı</label>
+            <input type="text" id="kayitKullaniciAdi" class="form-control" placeholder="Yeni kullanıcı adı...">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Şifre</label>
+            <input type="password" id="kayitSifre" class="form-control" placeholder="Yeni şifre...">
+        </div>
+        <button class="btn btn-success w-100 mb-3" style="background-color: #107c10; border: none;" onclick="sistemeKayitOl()">
+            Hesabı Oluştur ve Kaydet
+        </button>
+        <div id="kayitBasariMesaji" class="text-success mb-2 text-center small" style="display: none;">Kayıt başarılı! Giriş yapabilirsiniz.</div>
+        <div id="kayitHataMesaji" class="text-danger mb-2 text-center small" style="display: none;">Lütfen tüm alanları doldurun!</div>
+        <div class="text-center">
+            <a href="#" class="text-secondary small" onclick="formDegistir('giris')">Zaten bir hesabın var mı? Giriş Yap</a>
+        </div>
+    </div>
+</div>
+
+<div id="anaIcerik" style="display: none;" class="container mt-5">
+    <h1 class="text-center mb-4">Oyun Mağazası Veri Tabanı Yönetim Sistemi</h1>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card p-4 shadow h-100">
+                <h4 class="card-title mb-3">Toplu Veri Aktarımı (Admin Panel)</h4>
+                <form id="veriYuklemeFormu">
+                    <div class="mb-3">
+                        <label for="oyunDosyasi" class="form-label">Veri Dosyasını Seç (.json veya .csv)</label>
+                        <input class="form-control" type="file" id="oyunDosyasi" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100" style="background-color: #107c10; border: none;">
+                        Veritabanına Senkronize Et
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="sepet-kutusu h-100 d-flex flex-column justify-content-between card p-4 shadow">
+                <div>
+                    <h4 class="text-info border-bottom pb-2 mb-3">
+                        Sepetim <span id="sepetSayaci" class="badge bg-danger fs-6 ms-2">0</span>
+                    </h4>
+                    <ul id="sepetListesi" class="list-group list-group-flush mb-3" style="max-height: 150px; overflow-y: auto;">
+                        <li class="list-group-item bg-transparent text-secondary small text-center">Sepetiniz şu an boş.</li>
+                    </ul>
+                </div>
+                <div class="border-top pt-2 d-flex justify-content-between align-items-center">
+                    <h5>Toplam: <span id="sepetToplam" class="text-success">0</span></h5>
+                    <button class="btn btn-sm btn-success" onclick="alert('İşlem simüle edildi!')">Satın Al</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 class="text-light">Katalog / Mağaza Modülü</h2>
+
+            <div style="width: 300px;">
+                <small class="text-secondary d-block mb-1" style="font-size: 0.75rem;">Seçili kategoride veya tüm mağazada anlık arama yapın.</small>
+                <input type="text" id="aramaCubugu" class="form-control bg-dark text-white border-secondary" placeholder="Oyun adı yazın...">
+            </div>
+        </div>
+
+        <div class="mb-4 text-center d-flex flex-wrap justify-content-center gap-2">
+            <button class="btn btn-outline-info active" onclick="kategoriFiltrele('Hepsi', this)">Hepsi</button>
+            <button class="btn btn-outline-info" onclick="kategoriFiltrele('2D', this)">2D</button>
+            <button class="btn btn-outline-info" onclick="kategoriFiltrele('Aksiyon', this)">Aksiyon</button>
+            <button class="btn btn-outline-info" onclick="kategoriFiltrele('Dövüş', this)">Dövüş</button>
+            <button class="btn btn-outline-info" onclick="kategoriFiltrele('Korku', this)">Korku</button>
+            <button class="btn btn-outline-info" onclick="kategoriFiltrele('Macera', this)">Macera</button>
+            <button class="btn btn-outline-info" onclick="kategoriFiltrele('RPG', this)">RPG</button>
+            <button class="btn btn-outline-info" onclick="kategoriFiltrele('Soulslike', this)">Soulslike</button>
+        </div>
+
+        <div class="row" id="oyunlarKutusu"></div>
+    </div>
+
+    <div class="row mt-5">
+        <h2 class="text-light mb-4" style="color: #ffaa00 !important;">🔥 Öne Çıkan Top 5 Oyun</h2>
+        <div class="row" id="top5Konteyneri">
+            <div class="col-12 text-center text-secondary">
+                Top 5 oyun yükleniyor, lütfen bekleyin...
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="background-color: #171a21; color: white; border: 1px solid #2a475e;">
+            <div class="modal-header" style="border-bottom: 1px solid #2a475e;">
+                <h5 class="modal-title text-info" id="modalOyunBaslik">Oyun Adı</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="modalOyunAciklama" style="opacity: 0.9; line-height: 1.6;">Oyun açıklaması...</p>
+                
+                <!-- Dillerin dinamik yükleneceği tablo alanı -->
+                <div id="modalOyunDilleriKutusu" class="mt-4 border-top pt-3" style="border-color: #2a475e !important;">
+                    <h6 class="text-info mb-3" style="color: #66c0f4 !important;">Desteklenen Diller</h6>
+                    <div id="dillerTabloAlani" class="table-responsive">
+                        <!-- JavaScript buraya API'den gelen tabloyu basacak -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #2a475e;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = window.location.hostname === 'localhost' 
+        ? 'https://localhost:7189' 
+        : 'https://backpedal-garment-vivacious.ngrok-free.dev';
+
+    let kullanicilar = JSON.parse(localStorage.getItem('steamKullanicilar')) || { "admin": "1234" };
+    let oyunlar = []; 
+    let sepet = [];
+    let aktifKategori = 'Hepsi';
+
+    async function topBesOyunlariGetir() {
+        let vitrin = document.getElementById('top5Konteyneri');
+        try {
+            const response = await fetch(`${API_BASE}/api/Auth/Anasayfa`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                const top5 = await response.json();
+                vitrin.innerHTML = ''; 
+
+                top5.forEach(oyun => {
+                    let kartHTML = `
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow h-100" style="background-color: #1e1e1e; border: 1px solid #333;">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <h5 class="card-title" style="color: #ffaa00; font-weight: bold;">${oyun.oyunadi}</h5>
+                                        <div class="mt-2 p-2 rounded" style="background-color: #111;">
+                                            <p class="small text-secondary mb-1">Platformlar:</p>
+                                            <p class="mb-0" style="font-size: 0.85rem; color: #ccc;">${oyun.platform_adi}</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 pt-3 border-top" style="border-color: #333 !important;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge" style="background-color: #2a475e; color: #c7d5e0;">⭐ ${oyun.incelemepuani} Puan</span>
+                                            <h5 class="mb-0" style="color: #a3c83f; font-weight: bold;">${oyun.oyun_fiyatı} ${oyun.parabirimi}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    vitrin.innerHTML += kartHTML;
+                });
+            } else {
+                vitrin.innerHTML = '<div class="col-12 text-center text-danger">Top 5 yüklenemedi.</div>';
+            }
+        } catch (error) {
+            console.error("Top 5 API Hatası:", error);
+            vitrin.innerHTML = '<div class="col-12 text-center text-danger">Sunucuya bağlanılamadı.</div>';
+        }
+    }
+
+    async function verileriGetir() {
+        try {
+            const response = await fetch(`${API_BASE}/api/Oyunlar`);
+            if (response.ok) {
+                oyunlar = await response.json(); 
+                kartlariEkranaBas(oyunlar);
+            } else {
+                console.error("API hata döndürdü:", response.status);
+            }
+        } catch (error) {
+            console.error("Backend'e bağlanılamadı!", error);
+        }
+    }
+
+    function formDegistir(hedef) {
+        document.getElementById('girisHataMesaji').style.display = 'none';
+        document.getElementById('kayitHataMesaji').style.display = 'none';
+        document.getElementById('kayitBasariMesaji').style.display = 'none';
+
+        if(hedef === 'kayit') {
+            document.getElementById('loginFormKutusu').style.display = 'none';
+            document.getElementById('kayitFormKutusu').style.display = 'block';
+        } else {
+            document.getElementById('kayitFormKutusu').style.display = 'none';
+            document.getElementById('loginFormKutusu').style.display = 'block';
+        }
+    }
+
+    async function sistemeKayitOl() {
+        let uName = document.getElementById('kayitKullaniciAdi').value.trim();
+        let uPass = document.getElementById('kayitSifre').value;
+
+        if (!uName || !uPass) {
+            document.getElementById('kayitHataMesaji').style.display = 'block';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/api/Auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ Username: uName, Email: uName, Password: uPass })
+            });
+
+            if (response.ok) {
+                document.getElementById('kayitHataMesaji').style.display = 'none';
+                document.getElementById('kayitBasariMesaji').style.display = 'block';
+                document.getElementById('kayitKullaniciAdi').value = '';
+                document.getElementById('kayitSifre').value = '';
+                setTimeout(() => { formDegistir('giris'); }, 1500);
+            } else {
+                alert("Kayıt başarısız! Bilgileri kontrol edin.");
+            }
+        } catch (error) {
+            console.error("Kayıt API hatası:", error);
+        }
+    }
+
+    async function sistemeGirisYap() {
+        let uName = document.getElementById('girisKullaniciAdi').value.trim();
+        let uPass = document.getElementById('girisSifre').value;
+
+        if (!uName || !uPass) {
+            alert("Lütfen alanları doldurun!");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/api/Auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ Email: uName, Password: uPass })
+            });
+
+            if (response.ok) {
+                document.getElementById('authEkrani').style.display = 'none';
+                document.getElementById('anaIcerik').style.display = 'block';
+                verileriGetir(); 
+                topBesOyunlariGetir();
+            } else {
+                document.getElementById('girisHataMesaji').style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Giriş API hatası:", error);
+        }
+    }
+
+    function kartlariEkranaBas(liste) {
+        let container = document.getElementById('oyunlarKutusu');
+        container.innerHTML = ''; 
+
+        if(liste.length === 0) {
+            container.innerHTML = `<div class="col-12 text-center text-secondary mt-4">Aradığınız kriterlere uygun kayıt bulunamadı.</div>`;
+            return;
+        }
+
+        liste.forEach((oyun) => {
+            // "categories" verisi boş gelebilir, önlem alıyoruz
+            let katListe = oyun.categories || [];
+            let kategoriEtiketleri = katListe.map(k => `<span class="badge bg-secondary me-1" style="font-size:0.75rem;">${k}</span>`).join('');
+            let puanSınıfı = oyun.score >= 90 ? 'puan-yeşil' : 'puan-sarı';
+
+            let steamFiyat = oyun.priceSteam !== undefined ? oyun.priceSteam : (oyun.pricePC || 0);
+            let epicFiyat = oyun.priceEpic !== undefined ? oyun.priceEpic : 0;
+            let psFiyat = oyun.pricePS || 0;
+            let xboxFiyat = oyun.priceXbox || 0;
+
+            let kartHTML = `
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm h-100" style="background-color: #1e1e1e; border: 1px solid #333;">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title text-info" style="max-width: 75%; font-size: 1.1rem; color:#66c0f4 !important;">${oyun.title}</h5>
+                                    <span class="badge ${puanSınıfı}" title="Metacritic Skoru" style="background-color:#2a475e;">${oyun.score}</span>
+                                </div>
+                                <p class="card-text text-secondary mb-2" style="font-size: 0.85rem;">Geliştirici: ${oyun.developer}</p>
+                                <div class="mb-3">${kategoriEtiketleri}</div>
+                            </div>
+
+                            <div class="mt-2 border-top pt-2" style="border-color: #333 !important;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="text-secondary small">Satın Al:</div>
+                                    <button class="btn btn-sm btn-outline-secondary detay-buton" data-id="${oyun.id}" style="font-size:0.75rem; color:#66c0f4; border-color:#2a475e;">Detaylar</button>
+                                </div>
+                                <div class="d-flex justify-content-between gap-1 mb-1">
+                                    <div class="btn btn-sm text-center flex-fill sepet-ekle-platform" style="background-color: #2a475e; color: white; font-size:0.75rem;" data-id="${oyun.id}" data-platform="Steam" data-price="${steamFiyat}">
+                                        Steam<br>$${steamFiyat}
+                                    </div>
+                                    <div class="btn btn-sm text-center flex-fill sepet-ekle-platform" style="background-color: #b57a0b; color: white; font-size:0.75rem;" data-id="${oyun.id}" data-platform="Epic" data-price="${epicFiyat}">
+                                        Epic<br>${epicFiyat} TL
+                                    </div>
+                                    <div class="btn btn-sm btn-primary text-center flex-fill sepet-ekle-platform" style="font-size:0.75rem;" data-id="${oyun.id}" data-platform="PS" data-price="${psFiyat}">
+                                        PS<br>${psFiyat} TL
+                                    </div>
+                                    <div class="btn btn-sm btn-success text-center flex-fill sepet-ekle-platform" style="font-size:0.75rem;" data-id="${oyun.id}" data-platform="Xbox" data-price="${xboxFiyat}">
+                                        XB<br>${xboxFiyat} TL
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', kartHTML);
+        });
+
+    document.querySelectorAll('.detay-buton').forEach(b => {
+            b.addEventListener('click', function() {
+                let id = parseInt(this.getAttribute('data-id'));
+                let oyun = oyunlar.find(o => o.id === id);
+                // DİKKAT: Artık ilk parametre olarak oyunun adını (oyun.title) yolluyoruz
+                if(oyun) detayGoster(oyun.title, oyun.title, oyun.description || "Açıklama bulunamadı.");
+            });
+        });
+
+        document.querySelectorAll('.sepet-ekle-platform').forEach(b => {
+            b.addEventListener('click', function() {
+                let oyunId = parseInt(this.getAttribute('data-id'));
+                let platform = this.getAttribute('data-platform');
+                let secilenFiyat = parseFloat(this.getAttribute('data-price'));
+
+                let anaOyun = oyunlar.find(o => o.id === oyunId);
+                if(anaOyun) {
+                    sepeteEkle(anaOyun, platform, secilenFiyat);
+                }
+            });
+        });
+    }
+
+    let aramaZamanlayici;
+    document.getElementById('aramaCubugu').addEventListener('input', function(e) {
+        clearTimeout(aramaZamanlayici);
+        let kelime = e.target.value.trim();
+        let vitrin = document.getElementById('oyunlarKutusu');
+
+        if(kelime.length < 2) {
+            if(kelime.length === 0) {
+                let aktifButon = document.querySelector('.btn-outline-info.active');
+                if(aktifButon) {
+                    kategoriFiltrele(aktifKategori, aktifButon);
+                }
+            }
+            return;
+        }
+
+        vitrin.innerHTML = '<div class="col-12 text-center mt-4 text-warning">Oyunlar aranıyor...</div>';
+
+        aramaZamanlayici = setTimeout(async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/Auth/Search?kelime=${kelime}`, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const gelenVeri = await response.json();
+                    if (gelenVeri && gelenVeri.length > 0) {
+                        let toparlanmisVeri = veriyiGruplaVeFormatla(gelenVeri);
+                        oyunlar = toparlanmisVeri; // Global listeyi güncelle
+                        kartlariEkranaBas(toparlanmisVeri);
+                    } else {
+                        vitrin.innerHTML = '<div class="col-12 text-center text-secondary mt-4">Aradığınız oyun bulunamadı.</div>';
+                    }
+                } else {
+                    vitrin.innerHTML = '<div class="col-12 text-center text-danger mt-4">Arama başarısız oldu.</div>';
+                }
+            } catch (error) {
+                console.error("Arama API hatası:", error);
+                vitrin.innerHTML = '<div class="col-12 text-center text-danger mt-4">Sunucuya bağlanılamadı.</div>';
+            }
+        }, 500);
+    });
+
+    function veriyiGruplaVeFormatla(hamVeri) {
+           console.log("Backend verisi: ", hamVeri);
+        let oyunHaritasi = new Map();
+     
+        hamVeri.forEach(o => {
+            if (!oyunHaritasi.has(o.oyunadi)) {
+                oyunHaritasi.set(o.oyunadi, {
+                    // C#'tan gelen DTO'ndaki gerçek ID'yi buraya bağlıyoruz! 
+                    // (Backendde id, gameid veya oyun_id olarak geçiyorsa onu yaz, şimdilik o.id alıyoruz)
+                    id: o.oyunid,
+                    title: o.oyunadi,
+                    score: o.incelemepuani || 0,
+                    developer: o.gelistirici_firma || "Bilinmiyor",
+                    categories: [o.tür],
+                    priceSteam: 0,
+                    priceEpic: 0,
+                    pricePS: 0,
+                    priceXbox: 0
+                });
+            }
+
+            let mevcutOyun = oyunHaritasi.get(o.oyunadi);
+            let platform = (o.platform_adi || "").toLowerCase();
+            let fiyat = o.oyun_fiyatı || 0;
+
+            if (platform.includes("steam") || platform.includes("pc")) {
+                mevcutOyun.priceSteam = fiyat;
+            } else if (platform.includes("epic")) {
+                mevcutOyun.priceEpic = fiyat;
+            } else if (platform.includes("playstation") || platform.includes("ps")) {
+                mevcutOyun.pricePS = fiyat;
+            } else if (platform.includes("xbox")) {
+                mevcutOyun.priceXbox = fiyat;
+            }
+        });
+
+        return Array.from(oyunHaritasi.values());
+    }
+
+    async function kategoriFiltrele(kategoriAdı, buton) {
+        document.querySelectorAll('.btn-outline-info').forEach(b => b.classList.remove('active'));
+        buton.classList.add('active');
+        aktifKategori = kategoriAdı;
+        document.getElementById('aramaCubugu').value = ''; 
+
+        let vitrin = document.getElementById('oyunlarKutusu');
+
+        vitrin.innerHTML = '<div class="col-12 text-center mt-4 text-warning">Oyunlar SQL View\'dan çekiliyor...</div>';
+
+        try {
+            const response = await fetch(`${API_BASE}/api/Auth/OyunTürleri?butonadi=${kategoriAdı}`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                const gelenVeri = await response.json();
+                let toparlanmisVeri = veriyiGruplaVeFormatla(gelenVeri);
+                oyunlar = toparlanmisVeri; // Global listeyi güncelle
+                kartlariEkranaBas(toparlanmisVeri);
+            } else {
+                vitrin.innerHTML = '<div class="col-12 text-center text-danger mt-4">Kayıt bulunamadı.</div>';
+            }
+        } catch (error) {
+            console.error("Kategori API Hatası:", error);
+            vitrin.innerHTML = '<div class="col-12 text-center text-danger mt-4">Sunucuya bağlanılamadı.</div>';
+        }
+    }
+
+let aktifKullaniciId = 3; 
+
+    async function sepeteEkle(oyun, platform, fiyat) {
+        let sepetId = `${oyun.id}-${platform}`; // Artık gerçek ID üzerinden benzersiz sepetId kuruyoruz
+
+        if(sepet.some(s => s.sepetId === sepetId)) {
+            alert(`Bu kaydın ${platform} sürümü zaten sepetinizde mevcut!`);
+            return;
+        }
+
+        try {
+            // Backend'deki orijinal [HttpPost("/api/Auth/SepeteEkle")] metoduna gameid parametresiyle gidiyoruz
+            const response = await fetch(`${API_BASE}/api/Auth/SepeteEkle?gameid=${oyun.id}&kullaniciid=${aktifKullaniciId}`, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                sepet.push({
+                    sepetId: sepetId,
+                    title: `${oyun.title} (${platform})`,
+                    platform: platform, 
+                    price: fiyat
+                });
+                sepetiGuncelle();
+            } else if (response.status === 401) {
+                alert("Sepete ürün eklemek için lütfen giriş yapın.");
+            } else {
+                const hataMesaji = await response.text();
+                alert("Sepete eklenirken hata oluştu: " + hataMesaji);
+            }
+        } catch (error) {
+            console.error("Sepete Ekle API Hatası:", error);
+            alert("Sunucuya bağlanılamadı. Backend'i kontrol edin.");
+        }
+    }
+
+    function sepettenCikar(sepetId) {
+        sepet = sepet.filter(s => s.sepetId !== sepetId);
+        sepetiGuncelle();
+    }
+
+    function sepetiGuncelle() {
+        let listeKutusu = document.getElementById('sepetListesi');
+        let toplamKutusu = document.getElementById('sepetToplam');
+
+        listeKutusu.innerHTML = '';
+        let toplamFiyat = 0;
+
+        document.getElementById('sepetSayaci').innerText = sepet.length;
+
+        if(sepet.length === 0) {
+            listeKutusu.innerHTML = `<li class="list-group-item bg-transparent text-secondary small text-center">Sepetiniz şu an boş.</li>`;
+            toplamKutusu.innerText = "0";
+            return;
+        }
+
+        sepet.forEach(urun => {
+            toplamFiyat += urun.price;
+            let fiyatGosterim = urun.platform === 'Steam' ? `$ ${urun.price}` : `${urun.price} TL`;
+
+            listeKutusu.innerHTML += `
+                <li class="list-group-item bg-transparent text-light d-flex justify-content-between align-items-center p-1 small" style="border-color: #333;">
+                    <span>${urun.title} <span class="text-success fw-bold">(${fiyatGosterim})</span></span>
+                    <button class="btn btn-sm text-danger fw-bold bg-transparent border-0" onclick="sepettenCikar('${urun.sepetId}')">X</button>
+                </li>
+            `;
+        });
+
+        toplamKutusu.innerText = `${toplamFiyat}`;
+    }
+
+async function detayGoster(oyunadi, baslik, aciklama) {
+        document.getElementById('modalOyunBaslik').innerText = baslik;
+        document.getElementById('modalOyunAciklama').innerText = aciklama;
+
+        let dillerAlani = document.getElementById('dillerTabloAlani');
+        dillerAlani.innerHTML = '<div class="text-center text-secondary small">Diller API\'den yükleniyor...</div>';
+
+        var myModal = new bootstrap.Modal(document.getElementById('detayModal'));
+        myModal.show();
+
+        try {
+            
+            const response = await fetch(`${API_BASE}/api/Auth/DilDestekleri?oyun_adi=${encodeURIComponent(oyunadi)}`)
+            
+            if (response.ok) {
+                const diller = await response.json();
+                
+                if (diller && diller.length > 0) {
+                    let tabloHTML = `
+                        <table class="table table-dark table-sm table-bordered mt-2 text-center align-middle" style="font-size: 0.85rem; border-color: #2a475e;">
+                            <thead style="background-color: #171a21;">
+                                <tr style="color: #90b2c6;">
+                                    <th class="text-start ps-2">Dil</th>
+                                    <th>Arayüz</th>
+                                    <th>Seslendirme</th>
+                                    <th>Altyazı</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    diller.forEach(d => {
+                        tabloHTML += `
+                            <tr>
+                                <td class="text-start ps-2 text-light">${d.dil_adi || '-'}</td>
+                                <td class="text-secondary">${d.arayüz || '-'}</td>
+                                <td class="text-secondary">${d.dublaj || '-'}</td>
+                                <td class="text-secondary">${d.altyazi || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tabloHTML += `</tbody></table>`;
+                    dillerAlani.innerHTML = tabloHTML;
+                } else {
+                    dillerAlani.innerHTML = '<div class="text-secondary small mt-2">Bu oyun için veri tabanında dil kaydı bulunmuyor.</div>';
+                }
+            } else {
+                dillerAlani.innerHTML = '<div class="text-danger small mt-2">Dil bilgileri alınamadı. Backend bağlantısını kontrol edin.</div>';
+            }
+        } catch (error) {
+            console.error("Dil API Hatası:", error);
+            dillerAlani.innerHTML = '<div class="text-danger small mt-2">Sunucuya bağlanılamadı. CORS veya API hatası olabilir.</div>';
+        }
+    }
+</script>
